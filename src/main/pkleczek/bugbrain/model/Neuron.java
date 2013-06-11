@@ -2,12 +2,21 @@ package pkleczek.bugbrain.model;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import pkleczek.bugbrain.utils.BugMath;
 import static java.lang.Math.*;
 
 public abstract class Neuron extends Join {
 	private int threshold;
 	private List<Synapse> inputs = new ArrayList<>();
-	private List<Synapse> outputs = new ArrayList<>();
+
+	private int previousOutputValue = calculateOutput();
+
+	/**
+	 * Number of previous iterations in which the output value remained
+	 * unchanged.
+	 */
+	private int iterationsUnchanged;
 
 	protected int sumInputs() {
 		int out = 0;
@@ -16,10 +25,28 @@ public abstract class Neuron extends Join {
 			out += s.calculateOutput();
 		}
 
-		// Clamp to [-100,100]
-		out = (abs(out) > 100) ? (100 * (int) signum(out)) : out;
+		return BugMath.clamp(out);
+	}
 
-		return out;
+	public int getIterationsUnchanged() {
+		return iterationsUnchanged;
+	}
+
+	public void setIterationsUnchanged(int iterationsUnchanged) {
+		this.iterationsUnchanged = iterationsUnchanged;
+	}
+
+	/**
+	 * Next iteration of the simulation.
+	 */
+	public void nextIteration() {
+		int newOutputValue = calculateOutput();
+		if (previousOutputValue == newOutputValue) {
+			iterationsUnchanged++;
+		} else {
+			iterationsUnchanged = 0;
+		}
+		previousOutputValue = newOutputValue;
 	}
 
 	public int getThreshold() {
@@ -36,14 +63,6 @@ public abstract class Neuron extends Join {
 
 	public void setInputs(List<Synapse> inputs) {
 		this.inputs = inputs;
-	}
-
-	public List<Synapse> getOutputs() {
-		return outputs;
-	}
-
-	public void setOutputs(List<Synapse> outputs) {
-		this.outputs = outputs;
 	}
 
 }
